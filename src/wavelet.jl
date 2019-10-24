@@ -3,8 +3,8 @@ using FFTW, StatsFuns, Statistics, SpecialFunctions
 # Some functions for continous wavelet transfrom and cross-spectra
 #
 #
-# This is based on a straightforward Julia translation of the
-# 1d Wavelet transform from Torrence and Compo
+# This file is based on a straightforward Julia translation of the
+# code for 1d Wavelet transform from Torrence and Compo
 #
 # There is no intention to have a fancy, performant, or elegant "translation"
 # it just should be able to "do stuff"
@@ -154,11 +154,11 @@ function wave_signif(y,dt,scale,sigtest=-1,lag1=-1,siglvl=-1,dof=-1,mother=-1,pa
         chisquare = chisqinvcdf(dof,siglvl)/dof    # .. in julia we use StatsFuns
         signif = fft_theor*chisquare   # [Eqn(18)]
     elseif sigtest == 1  # time-averaged significance
-        if length(dof) == 1; dof=zeros(j1+1)+dof; end
+        if length(dof) == 1; dof=zeros(j1+1) .+ dof; end
         #truncate = find(dof .< 1)
         #dof[truncate] = ones(length(truncate))
         map!(z->max(1.0,z), dof, dof)
-        dof = dofmin*sqrt.(1 + (dof*dt/gamma_fac ./ scale).^2 )   # [Eqn(23)]
+        dof = dofmin*sqrt.(1 .+ (dof*dt/gamma_fac ./ scale).^2 )   # [Eqn(23)]
         #truncate = find(dof .< dofmin)
         #dof[truncate] = dofmin*ones(length(truncate))   # minimum DOF is dofmin
         map!(z->max(dofmin,z), dof, dof)
@@ -404,20 +404,3 @@ function wavelet(y,dt,pad=0,dj=-1,s0=-1,j1=-1,mother=-1,param=-1)
 
     wave, period, scale, coi
 end
-
-# **********************************************************************************
-# **********************************************************************************
-
-# friendly interface to continuoous wavelet transform (cwt)
-# using some default parameters
-function cwt(y,dt)
-    pad = 0
-    dj =0.25
-    s0 = 2*dt
-    n1 = length(y)
-    j1=trunc(Int,(log(n1*dt/s0)/log(2.0))/dj)
-    mother = "MORLET"
-    k0 = 6
-    wavelet(y,dt,pad,dj,s0,j1,mother,k0)
-end
-

@@ -32,3 +32,71 @@ function smooth(x,dt,nvoice,scale,sw=0.6)
  
     xf
  end
+
+
+# some functions for circular Statistics
+
+function unwrap(v,vmin,vmax)
+  # unwrap phase angle (phase in multiples of pi)
+    if v < vmin
+        v += 2.0
+    elseif v > vmax
+        v -= 2.0
+    end
+  v
+end
+
+function circstats(ph)
+    # ph is a vector if phases in units of 2 pi
+    n = length(ph)
+
+    c = sum(cos.(ph)) / n
+    s = sum(sin.(ph)) / n
+
+    R = sqrt(c*c + s*s)       # order parameter
+    var = 1.0 - R             # cicurlar variance
+    theta = atan(s,c)         # mean direction
+    std = sqrt(-2. * log(R))  # circular standard deviation
+    theta, var, std
+end
+
+
+function get_maxInd(wcs_abs, wco, phs, n, ind1, ind2)
+    # find maximal cross-spectrum at each time instance
+    # within a range of indices (ind1, ind2) - corresponding to large power
+
+    wcs_max_ind = zeros(Int,n)
+    wco_max  = zeros(n)
+    angle_max = zeros(n)
+    for i=1:n
+        ind = argmax(wcs_abs[ind1:ind2,i]) + ind1 - 1
+        wcs_max_ind[i] = ind
+        wco_max[i]   = wco[ind,i]
+        angle_max[i] = phs[ind,i] / pi   # we always measure phase in multiples of pi
+    end
+    angle_max = unwrap.(angle_max, -0.5, 1.5)   # restrict phases to range -0.5 .. 1.5
+
+    wcs_max_ind, angle_max, wco_max
+end
+
+
+function phasehist(angles, indices)
+    # calculate histogram of phase angles (given in multiples of pi)
+    delta = 0.01
+    angle_hist = fit(Histogram, angles[indices],closed=:right, -0.5:delta:1.5)
+    h_angle = angle_hist.weights
+    h_bins = pi* (angle_hist.edges[1][2:end])
+
+    #smoothing of histogram
+    width = 25
+    filt = (1/width)*ones(width)   # filter window
+    ll = length(h_angle)
+    h_angle1 = [h_angle; h_angle ; h_angle]  # wrap the histogram to consider periodic boundaries
+    h_angle1 = filtfilt(filt,h_angle1)
+    h_angle = h_angle1[ll+1:2*ll]
+    
+    # normalization of histogram
+    h_angle = h_angle / sum(h_angle)
+
+    h_angle, h_bins
+end

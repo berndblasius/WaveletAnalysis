@@ -361,6 +361,7 @@ end
 #  Boulder, CO 80301, USA                 Boulder, CO 80305-3328, USA
 #  E-mail: chris[AT]rsinc[DOT]com         E-mail: compo[AT]colorado[DOT]edu
 #----------------------------------------------------------------------------
+
 function wavelet(y,dt,pad=0,dj=-1,s0=-1,j1=-1,mother=-1,param=-1)
 
     n1 = length(y)

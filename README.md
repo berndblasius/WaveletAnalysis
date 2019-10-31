@@ -6,27 +6,20 @@ bivariate wavelet analysis, implemented in Julia.
 
 **Description**: A collection of simple functions to perform time continunuous wavelet transform (CWT) and bivariate wavelet analysis, including wavelet cross spectrum (WCS), scale-time averaging, amplitude-phase separation, wavelet coherence (WCO), significance testing, and plotting. All functions assume that input data contain time series of real (or integer) numbers, given at a constant sampling rate (a function to handle missing data and to interpolate irregular data is provided).
 
-The code for the wavelet transform essentially is a straightforward Julia translation of the 1d Wavelet transform from Torrence and Compo (http://paos.colorado.edu/research/wavelets/).
+The code for the wavelet transform (in the function `src/wavelet.jl`) essentially is a straightforward Julia translation of the 1d Wavelet transform from [Torrence and Compo](http://paos.colorado.edu/research/wavelets/) (see original copyright below). 
 
-There is no intention to have a fancy, performant, or elegant "translation"
-it just should be able to "do stuff"  
-
-This repository does not aspire to be exhaustive. These are just functions that I developed in the study of a forthcoming paper: Blasius et al.(2019) Long-term cyclic persistence in an experimental predator-prey system.
+The other functions are extensions for bivariate wavelet and phase analysis. 
+This repository does not aspire to be exhaustive. These are just functions that I developed in the study of a forthcoming paper: **Blasius et al.(2019) Long-term cyclic persistence in an experimental predator-prey system.**
 *Please cite this paper when using the code*.
 
+**Data**: The folder `data` contains some sample time series, e.g. the El Nino time series, the Canadian hare-lynx cycle, and the predator-prey time series from the reference Blasius et al (2019)
 
-The folder `data` contains some sample time series.
-
-The folder `test` contains some documented examples.
-
+**Code**: The folder `src` contains the main algorithms, the folder `test` contains some worked-out examples, demonstrating how to apply the algorithms and visualize the results.
 
 
 
-**Time continuous wavelet transorm**: This is based on a straightforward Julia translation of the
-1d Wavelet transform from Torrence and Compo
 
-
-HERE GOES THE ORIGINAL COPYRIGHT:
+**Original copyright for the wavelet transform code**:
 
 > Copyright (C) 1995-2004, Christopher Torrence and Gilbert P. Compo
 >

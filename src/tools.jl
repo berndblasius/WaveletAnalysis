@@ -2,6 +2,78 @@
 ## Author Bernd Blasius (bernd.blasius@gmail.com)
 
 
+function do_wavelet_short(t,x,dt)
+  # x: vector of time series
+  pad = 1              # pad the time series with zeroes (recommended)
+  #nvoice = 32
+  nvoice = 100      # this will do 100 sub-octaves per octave
+  dj = 1 ./ nvoice
+  s0 = 2.0             # this says start at a scale of 2 days
+  #s0 = 1.0             # this says start at a scale of 2 days
+  noctave = 3
+  #j1 = trunc(Int,noctave/dj) # this says do 4 powers-of-two with dj sub-octaves each
+  j1 = noctave * nvoice
+                       # according to Maraun this is number of scales minus 1
+  mother = "MORLET"
+
+  #x = log10.(x+maximum(x)*1e-3)
+  x = x .- mean(x)    # normalize
+  #x = preprocess(x)
+  #x = preprocess1(t,x,dt)
+  x = x ./ std(x)
+  variance = var(x)
+
+  wave,period,scale,coi = wavelet(x,dt,pad,dj,s0,j1,mother)
+  power = abs2.(wave)   # wavelet power
+
+  # Global wavelet spectrum & significance levels:
+  global_ws = variance*(mean(sqrt.(power),dims=2))   # time-average over all times
+
+  wave, period, power, global_ws, scale, coi, nvoice
+end
+
+
+function deal_missing(x,t)
+  # remove missing data (in csv file this is coded as NaN)
+  n = length(x)
+  x1 = zeros(n)
+  t1 = zeros(n)
+
+  j=0
+  for i = 1:n
+    if !isnan(x[i])
+       j += 1
+       x1[j] = x[i]
+       t1[j] = t[i]
+    end
+  end
+  x1[1:j], t1[1:j]
+end
+
+
+function sample_regular(x,t,dt,keep_positive)
+# sample time series x,t at regular sampling rate dt and interpolate missing values   
+# needs julia package Dierckx
+
+    # eliminate missing values, this yields new time vectors for every state
+    xx,tx = deal_missing(x,t)
+
+    # interpolation to a regular one-day sampling interval
+    t_end = trunc(t[end])
+    tt = 0:dt:t_end
+    xr = evaluate(Spline1D(tx,xx),tt)   # regularly spaced time series
+
+    # frequently we want to restrict time series to positive values
+    # this may be violiated by the spline fitting which artificially may introduce 
+    # negative values
+    # this is a simple hack to remove this, but it works (at least in the case I was interested in)
+    if keep_positive 
+      xr = minimum(xr) < 0 ? xr .- minimum(xr) : xr
+    end
+
+    return tt,xr
+end
+
 
 function scramble(x,n)
 # sample n random values from time series x
@@ -10,8 +82,10 @@ function scramble(x,n)
     x[rand(1:len,n)]
 end
 
+
 function smooth(x,dt,nvoice,scale,sw=0.6)
-    # this function needs julia package DSP.jl
+# wavelet scale-time smoothing
+# this function needs julia package DSP.jl
     xf = similar(x)  # smoothed data
     nscales, ntimes = size(x)
  
@@ -26,14 +100,49 @@ function smooth(x,dt,nvoice,scale,sw=0.6)
     # window sw=0.6 corresponds to decorrelation length of Morlet wavelet
     sw_tot = trunc(Int,sw*nvoice)
     b = (1/sw_tot)*ones(sw_tot)     # flat (rectangular) window -> moving average
-    for i=1:ntimes
+    for i=1:ntimes 
       xf[:,i] = filtfilt(b,xf[:,i])
     end
- 
     xf
  end
 
+ function preprocess(x)
+ # do some data preprocessing with a bandpass filter
+    responsetype = Bandpass(1 ./ 12, 0.49; fs=1)
+    designmethod = Butterworth(4)
+    x = filt(digitalfilter(responsetype, designmethod), x)
+    x
+ end
 
+ function preprocess1(t,x,dt)
+    # bandpass filter in frequency domain (implemented by hand)
+    sh = 500       #   sharpnes of filter function
+    # minimum and maximum frequency cut-offs of the bandpass filter
+    f1 = 1/16
+    f2 = 1/5
+
+    fmax = 1/(2*dt)           # highest possible frequency
+    fmin = 1/(t[end] - t[1])  # lowest possible frequency
+    freq = LinRange(fmin,2*fmax,length(t))
+    # Fermi function
+    fil_part1 = 1 ./ (exp.(sh*(freq .- f2)) .+ 1) .* 1. ./ (exp.(sh*(f1 .- freq)) .+ 1) 
+    fil_part2 = fil_part1[length(fil_part1):-1:1]  # symmetrical counter part
+    fil_freq = max.(fil_part1,fil_part2)           # merge the parts
+
+    ft = fft(x)          # Fourier transformg
+    phase = angle.(ft)   # phase
+    ps = abs.(ft)        # power spectrum
+
+    #   filter data
+    ps_fil = ps .* fil_freq     # filter power spectra
+    # recalculate fourier
+    ft_fil = cos.(phase) .* ps_fil .+       #real part
+              sin.(phase) .* ps_fil*im      #imaginary part
+    fil = real.(ifft(ft_fil))            # retransformation
+ end
+
+
+# #########################################################
 # some functions for circular Statistics
 
 function unwrap(v,vmin,vmax)
@@ -61,6 +170,10 @@ function circstats(ph)
 end
 
 
+
+# #########################################################
+# function to indentify strongest co-oscillating components
+
 function get_maxInd(wcs_abs, wco, phs, n, ind1, ind2)
     # find maximal cross-spectrum at each time instance
     # within a range of indices (ind1, ind2) - corresponding to large power
@@ -80,7 +193,7 @@ function get_maxInd(wcs_abs, wco, phs, n, ind1, ind2)
 end
 
 
-function phasehist(angles, indices)
+function phasehist(angles, indices, delta, width)
     # calculate histogram of phase angles (given in multiples of pi)
     delta = 0.01
     angle_hist = fit(Histogram, angles[indices],closed=:right, -0.5:delta:1.5)
@@ -88,7 +201,6 @@ function phasehist(angles, indices)
     h_bins = pi* (angle_hist.edges[1][2:end])
 
     #smoothing of histogram
-    width = 25
     filt = (1/width)*ones(width)   # filter window
     ll = length(h_angle)
     h_angle1 = [h_angle; h_angle ; h_angle]  # wrap the histogram to consider periodic boundaries
@@ -96,7 +208,8 @@ function phasehist(angles, indices)
     h_angle = h_angle1[ll+1:2*ll]
     
     # normalization of histogram
-    h_angle = h_angle / sum(h_angle)
+    #h_angle = h_angle / sum(h_angle)    # this would normalize the histogram
+    h_angle = h_angle / maximum(h_angle) # here instead we want the max to be one
 
     h_angle, h_bins
 end

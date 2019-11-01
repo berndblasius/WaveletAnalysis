@@ -9,12 +9,13 @@ bivariate wavelet analysis, implemented in Julia.
 The code for the wavelet transform (in the function `src/wavelet.jl`) essentially is a straightforward Julia translation of the 1d Wavelet transform from [Torrence and Compo](http://paos.colorado.edu/research/wavelets/) (see original copyright below). 
 
 The other functions are extensions for bivariate wavelet and phase analysis. 
-This repository does not aspire to be exhaustive. These are just functions that I developed in the study of a forthcoming paper: **Blasius et al.(2019) Long-term cyclic persistence in an experimental predator-prey system.**
-*Please cite this paper when using the code*.
+This repository does not aspire to be exhaustive. 
+The repository just contains a colloection of functions that I developed in the study of a forthcoming paper and want to make open fpr public use: **Blasius et al. (2019) Long-term cyclic persistence in an experimental predator-prey system.**
+*Please acknowledge the use of this software by citing the above publication*.
 
 **Data**: The folder `data` contains some sample time series, e.g. the El Nino time series, the Canadian hare-lynx cycle, and the predator-prey time series from the reference Blasius et al (2019)
 
-**Code**: The folder `src` contains the main algorithms, the folder `test` contains some worked-out examples, demonstrating how to apply the algorithms and visualize the results.
+**Code**: The folder `src` contains the main algorithms, the folder `examples` contains some worked-out examples, demonstrating how to apply the algorithms and visualize the results.
 
 
 

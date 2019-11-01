@@ -136,8 +136,10 @@ function test_wcs_harelynx()
           " std ", deviation)
 
   # calculate histogram of phase differences
-  h_angle, h_bins = phasehist(angle_max, 1:length(angle_max))
-  h_angle = h_angle ./ maximum(h_angle)
+  ph_bins  = 0.01 # phase bins = pi/100
+  #ph_width = 25   # histogram smoothed over 25 bins
+  ph_width = 15    # histogram smoothed over 15 bins (=pi/8 = 27 deg)
+  h_angle, h_bins = phasehist(angle_max, 1:length(angle_max),ph_bins,ph_width)
 
 
   # ********* Plotting ************

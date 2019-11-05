@@ -2,36 +2,6 @@
 ## Author Bernd Blasius (bernd.blasius@gmail.com)
 
 
-function do_wavelet_short(t,x,dt)
-  # x: vector of time series
-  pad = 1              # pad the time series with zeroes (recommended)
-  #nvoice = 32
-  nvoice = 100      # this will do 100 sub-octaves per octave
-  dj = 1 ./ nvoice
-  s0 = 2.0             # this says start at a scale of 2 days
-  #s0 = 1.0             # this says start at a scale of 2 days
-  noctave = 3
-  #j1 = trunc(Int,noctave/dj) # this says do 4 powers-of-two with dj sub-octaves each
-  j1 = noctave * nvoice
-                       # according to Maraun this is number of scales minus 1
-  mother = "MORLET"
-
-  #x = log10.(x+maximum(x)*1e-3)
-  x = x .- mean(x)    # normalize
-  #x = preprocess(x)
-  #x = preprocess1(t,x,dt)
-  x = x ./ std(x)
-  variance = var(x)
-
-  wave,period,scale,coi = wavelet(x,dt,pad,dj,s0,j1,mother)
-  power = abs2.(wave)   # wavelet power
-
-  # Global wavelet spectrum & significance levels:
-  global_ws = variance*(mean(sqrt.(power),dims=2))   # time-average over all times
-
-  wave, period, power, global_ws, scale, coi, nvoice
-end
-
 
 function deal_missing(x,t)
   # remove missing data (in csv file this is coded as NaN)
@@ -174,22 +144,22 @@ end
 # #########################################################
 # function to indentify strongest co-oscillating components
 
-function get_maxInd(wcs_abs, wco, phs, n, ind1, ind2)
-    # find maximal cross-spectrum at each time instance
-    # within a range of indices (ind1, ind2) - corresponding to large power
+function get_maxInd(wco, phs, n, ind1, ind2)
+    # find maximal wavelet coherence at each time instance
+    # search only within a range of indices (ind1, ind2) - corresponding to large power
 
-    wcs_max_ind = zeros(Int,n)
-    wco_max  = zeros(n)
-    angle_max = zeros(n)
+    wco_max_ind = zeros(Int,n)   # vector of indices of maximal coherence
+    wco_max  = zeros(n)          # vector of maximal
+    angle_max = zeros(n)         # vector of correspondingphase differences
     for i=1:n
-        ind = argmax(wcs_abs[ind1:ind2,i]) + ind1 - 1
-        wcs_max_ind[i] = ind
+        ind = argmax(wco[ind1:ind2,i]) + ind1 - 1
+        wco_max_ind[i] = ind
         wco_max[i]   = wco[ind,i]
         angle_max[i] = phs[ind,i] / pi   # we always measure phase in multiples of pi
     end
     angle_max = unwrap.(angle_max, -0.5, 1.5)   # restrict phases to range -0.5 .. 1.5
 
-    wcs_max_ind, angle_max, wco_max
+    wco_max_ind, angle_max, wco_max
 end
 
 
@@ -208,7 +178,7 @@ function phasehist(angles, indices, delta, width)
     h_angle = h_angle1[ll+1:2*ll]
     
     # normalization of histogram
-    #h_angle = h_angle / sum(h_angle)    # this would normalize the histogram
+    #h_angle = h_angle / sum(h_angle)    # this would ormalize the histogram
     h_angle = h_angle / maximum(h_angle) # here instead we want the max to be one
 
     h_angle, h_bins

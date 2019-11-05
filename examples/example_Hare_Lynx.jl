@@ -116,16 +116,18 @@ function test_wcs_harelynx()
   gws2 = global_ws2 / maximum(global_ws2)
   gwco = global_wco / maximum(global_wco)
   gwcs = global_amplitude / maximum(global_amplitude)
-
-  # plotting scale range
-  lminp = log2(minimum(period))
-  lmaxp = log2(maximum(period))
-  lrange = (trunc(lminp) :  trunc(lmaxp))
+ 
+  # prefixed scale band
+  # consider all scales within 0.6 octaves from peaks in global spectrum
+  delta_ind = trunc(Int, 0.6*nvoices)
+  ind_max   = argmax(gwcs)[1]        # peak scale in global WCS
+  ind1 = ind_max - delta_ind  # indices  ...
+  ind2 = ind_max + delta_ind
+  period_min = period[ind1]  # .. and corresponding scales
+  period_max = period[ind2]
 
   # identifiy phases at scales of maximal corr spectrum
-  ind1=1; ind2=length(period)
-  wcs_max_ind, angle_max, wco_max = get_maxInd(
-        amplitude,wco,phase,length(t),ind1,ind2)
+  wcs_max_ind, angle_max, wco_max = get_maxInd(wco,phase,length(t),ind1,ind2)
 
   # line of maximal wcs
   wco_scale = log2.(period[wcs_max_ind])
@@ -137,9 +139,17 @@ function test_wcs_harelynx()
 
   # calculate histogram of phase differences
   ph_bins  = 0.01 # phase bins = pi/100
-  #ph_width = 25   # histogram smoothed over 25 bins
   ph_width = 15    # histogram smoothed over 15 bins (=pi/8 = 27 deg)
   h_angle, h_bins = phasehist(angle_max, 1:length(angle_max),ph_bins,ph_width)
+
+
+  # plotting scale range
+  lminp = log2(minimum(period))
+  lmaxp = log2(maximum(period))
+  lrange = (trunc(lminp) :  trunc(lmaxp))
+  # plotting time range
+  tmax = maximum(t)
+  tmin = minimum(t)
 
 
   # ********* Plotting ************
@@ -147,6 +157,7 @@ function test_wcs_harelynx()
   nrows = 4
   if nrows == 4 # four columns
       fig = figure("fig_name",figsize=(10,8))   # 4 columns
+      clf()
       fig_width_y       = 0.15
       figleft_x         = 0.1
       figleft_width_x   = 0.65
@@ -158,11 +169,6 @@ function test_wcs_harelynx()
       fig_y4=0.1
   end
 
-  tmax = maximum(t)
-  tmin = minimum(t)
-
-  clf()
-  
   # Plot time series 
   ax = PyPlot.axes([figleft_x, fig_y1, figleft_width_x, fig_width_y])
   label="a"
@@ -182,8 +188,6 @@ function test_wcs_harelynx()
   time2 = 1932 - 1845 + 1 
   hh = h[time1:time2]  # just for the phase plane ..
   ll = l[time1:time2]  # .. restrict data to nicely oscillating time window
-  #mf = mf .+ abs(minimum(mf))
-  #bf = bf .+ abs(minimum(bf))
   hh = hh / maximum(hh)
   ll = ll / maximum(ll)
   plot(hh, ll,"k")
@@ -203,10 +207,8 @@ function test_wcs_harelynx()
   contourf(t, log2.(period),amplitude,levels1, cmap=PyPlot.cm.jet )
   plot(t,log2.(coi),"k")           # cone-of-influence, anything "below" is dubious
   plot(t,wco_scale,"k-",linewidth=2)
-  #  significance levels
-  #  contour(t, log2.(period1),swco2,[cv_wco], colors="black")
-  #plot(t,ones(length(t))*log2(period_min),"k")    # lower border line
-  #plot(t,ones(length(t))*log2(period_max),"k")    # upper border line
+  plot(t,ones(length(t))*log2(period_min),"k")    # lower border line
+  plot(t,ones(length(t))*log2(period_max),"k")    # upper border line
   ylabel("period length")
   ylim(lmaxp,lminp)
   yticks(lrange, 2 .^ lrange)
@@ -220,8 +222,8 @@ function test_wcs_harelynx()
   ax = PyPlot.axes([figright_x,fig_y2, figrigtht_width_x, fig_width_y])
   label = "d"
   plot(gwcs,log2.(period),"k")
-  #plot([0.,1], [1,1]*log2.(period_min),"k")
-  #plot([0.,1], [1,1]*log2.(period_max),"k")
+  plot([0.,1], [1,1]*log2.(period_min),"k")
+  plot([0.,1], [1,1]*log2.(period_max),"k")
   xlabel("power", fontsize=12)
   ylim(lmaxp,lminp)
   yticks(lrange, 2 .^ lrange)
@@ -238,10 +240,8 @@ function test_wcs_harelynx()
   contourf(t, log2.(period),wco,levels1, cmap=PyPlot.cm.jet )
   plot(t,log2.(coi),"k")           # cone-of-influence, anything "below" is dubious
   plot(t,wco_scale,"k-",linewidth=2)
-  #  significance levels
-  #  contour(t, log2.(period1),swco2,[cv_wco], colors="black")
-  #plot(t,ones(length(t))*log2(period_min),"k")    # lower border line
-  #plot(t,ones(length(t))*log2(period_max),"k")    # upper border line
+  plot(t,ones(length(t))*log2(period_min),"k")    # lower border line
+  plot(t,ones(length(t))*log2(period_max),"k")    # upper border line
   ylabel("period length")
   ylim(lmaxp,lminp)
   yticks(lrange, 2 .^ lrange)
@@ -256,8 +256,8 @@ function test_wcs_harelynx()
   label = "f"
   plot(gws1,log2.(period),"g")
   plot(gws2,log2.(period),"r")
-  #plot([0.,1], [1,1]*log2.(period_min),"k")
-  #plot([0.,1], [1,1]*log2.(period_max),"k")
+  plot([0.,1], [1,1]*log2.(period_min),"k")
+  plot([0.,1], [1,1]*log2.(period_max),"k")
   xlabel("power", fontsize=12)
   ylim(lmaxp,lminp)
   yticks(lrange, 2 .^ lrange)
@@ -297,7 +297,6 @@ function test_wcs_harelynx()
 
 end
 
-#test_cwt_harelynx()
 test_wcs_harelynx()
 
 

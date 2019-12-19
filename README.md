@@ -7,14 +7,15 @@ bivariate wavelet analysis, implemented in Julia.
 **Description**: A collection of simple functions to perform time continunuous wavelet transform (CWT) and bivariate wavelet analysis, including wavelet cross spectrum (WCS), scale-time averaging, amplitude-phase separation, wavelet coherence (WCO), significance testing, and plotting. All functions assume that input data contain time series of real (or integer) numbers, given at a constant sampling rate (a function to handle missing data and to interpolate irregular data is provided).
 
 Further included are some small function for fft-transform of real valued
-signals, plus (naive) power spectrum and Hilbert transform 
+signals, plus (naive) power spectrum and Hilbert transform. 
 
 The code for the wavelet transform (in the function `src/wavelet.jl`) essentially is a straightforward Julia translation of the 1d Wavelet transform from [Torrence and Compo](http://paos.colorado.edu/research/wavelets/) (see original copyright below). 
 
 The other functions are extensions for bivariate wavelet and phase analysis. 
 This repository does not aspire to be exhaustive. 
-The repository just contains a colloection of functions that I developed in the context of a recent paper and want to make open fpr public use: **Blasius et al. (2019) Long-term cyclic persistence in an experimental predator-prey system.
-Nature. [DOI](https://doi.org/10.1038/s41586-019-1857-0)**
+The repository just contains a colloection of functions that I developed in the context of a recent paper and want to make open for public use:  
+**Blasius et al. (2019) Long-term cyclic persistence in an experimental predator-prey system.
+Nature. [DOI](https://doi.org/10.1038/s41586-019-1857-0)**  
 *Please acknowledge the use of this software by citing the above publication*.
 
 **Data**: The folder `data` contains some sample time series, e.g. the El Nino time series, the Canadian hare-lynx cycle, and the predator-prey time series from the reference Blasius et al (2019)

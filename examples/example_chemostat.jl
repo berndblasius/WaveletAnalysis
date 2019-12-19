@@ -146,7 +146,6 @@ function ExtDataFig1()
                                , wcs_max_ind2[indices_wco])]
 
     # find contiguous time windows of correlated oscillations 
-    # method 2: gives also the time points of the time windows
     iwco = indices_wco
     # find all breaks, ie difference of 2 indices larger than 1 ..
     inds = findall(x->x>1, diff(iwco))  
@@ -211,7 +210,6 @@ function ExtDataFig1()
     # ********* Plotting ************
     figure("ExtDataFig1",figsize=(10,10))  # 6 columns
     clf()
-    
     figleft_width_x = 0.65
     figrigth_width_x = 0.15
     figleft_x = 0.1
@@ -360,8 +358,6 @@ function ExtDataFig1()
     #pcolormesh(t, log2.(period1),swco2, cmap=PyPlot.cm.jet, alpha = 0.5)
     levels = range(0, stop=1, length=200)
     contourf(t, log2.(period1),swco2,levels, cmap=PyPlot.cm.jet )
-
-
     contour(t, log2.(period1),swco2,[cv_wco], colors="black")
     plot(t,log2.(coi),"k") #cone-of-influence, anything "below" is dubious
     plot(t,ones(length(t))*log2(period_min),"k")    # lower border line
